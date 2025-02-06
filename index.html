@@ -32,6 +32,8 @@
       font-size: 14px;
     }
   </style>
+  <!-- Optional favicon (using a blank data URI to avoid 404 errors) -->
+  <link rel="icon" href="data:;base64,iVBORw0KGgo=">
 </head>
 <body>
   <!-- UI Controls -->
@@ -45,23 +47,9 @@
     </label>
   </div>
 
-  <!-- Three.js Script -->
+  <!-- Three.js Demo Code -->
   <script type="module">
-    /***********************************************************************
-     * Cotton Supply Chain Simulation using Three.js
-     *
-     * This demo simulates the journey of cotton from raw growth to final 
-     * product distribution. Each stage is represented by a different group
-     * with unique models and particle effects. Camera transitions and basic 
-     * UI controls enhance interactivity.
-     *
-     * Setup Instructions:
-     * 1. Save this file as index.html.
-     * 2. Run a local server (e.g., using "python -m http.server").
-     * 3. Open the browser and navigate to the local server URL.
-     ***********************************************************************/
-
-    // Import Three.js and OrbitControls from CDN
+    // Import Three.js and OrbitControls from the CDN (using full URLs)
     import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.146.0/build/three.module.js';
     import { OrbitControls } from 'https://cdn.jsdelivr.net/npm/three@0.146.0/examples/jsm/controls/OrbitControls.js';
 
@@ -98,9 +86,7 @@
     let cameraEndPos = new THREE.Vector3();
     let cameraEndTarget = new THREE.Vector3();
 
-    // ------------------------------------------------------
-    // Initialization: scene, camera, renderer, controls, lights
-    // ------------------------------------------------------
+    // Initialize the scene and start the animation loop
     init();
     animate();
 
@@ -138,7 +124,7 @@
       stageGroups.push(createTextileFactories());
       stageGroups.push(createDistributionCenter());
 
-      // Add all stage groups to the scene but only show the first stage initially.
+      // Add all stage groups to the scene, but only show the first stage initially.
       stageGroups.forEach((group, index) => {
         group.visible = (index === currentStageIndex);
         scene.add(group);
@@ -146,8 +132,14 @@
 
       // Setup event listeners for window resize and UI controls
       window.addEventListener('resize', onWindowResize, false);
-      document.getElementById('prevStage').addEventListener('click', prevStage);
-      document.getElementById('nextStage').addEventListener('click', nextStage);
+      document.getElementById('prevStage').addEventListener('click', () => {
+        console.log("Previous Stage button clicked");
+        prevStage();
+      });
+      document.getElementById('nextStage').addEventListener('click', () => {
+        console.log("Next Stage button clicked");
+        nextStage();
+      });
       document.getElementById('speedControl').addEventListener('input', (e) => {
         animationSpeed = parseFloat(e.target.value);
       });
@@ -160,31 +152,27 @@
       renderer.setSize(window.innerWidth, window.innerHeight);
     }
 
-    // ------------------------------------------------------
-    // Animation Loop: Updates each stage and camera transitions.
-    // ------------------------------------------------------
+    // Main animation loop
     function animate() {
       requestAnimationFrame(animate);
       const delta = clock.getDelta() * animationSpeed;
 
-      // Update the current stage animations
+      // Update each stage's animations
       updateCottonFields(delta);
       updateHarvestingMachinery(delta);
       updateGinningFacilities(delta);
       updateTextileFactories(delta);
       updateDistributionCenter(delta);
 
-      // Smooth camera transition update
+      // Update the smooth camera transition
       updateCameraTransition(delta);
 
       renderer.render(scene, camera);
     }
 
-    // ------------------------------------------------------
-    // Stage Transition Functions and Camera Transition Handling
-    // ------------------------------------------------------
-    // Change stage (show/hide groups) and reset camera transition.
+    // Switch stages and update camera position
     function setStage(index) {
+      console.log("Switching to stage:", index);
       stageGroups.forEach((group, i) => {
         group.visible = (i === index);
       });
@@ -202,7 +190,7 @@
       setStage(newIndex);
     }
 
-    // Initiate a smooth camera transition toward the defined camera position for the given stage.
+    // Set up a smooth camera transition for the stage change
     function setCameraForStage(stageIndex) {
       cameraTransitionTime = 0;
       cameraStartPos = camera.position.clone();
@@ -211,12 +199,11 @@
       cameraEndTarget = cameraPositions[stageIndex].target.clone();
     }
 
-    // Lerp the camera position and target during transitions.
     function updateCameraTransition(delta) {
       if (cameraTransitionTime < transitionDuration) {
         cameraTransitionTime += delta;
         let t = Math.min(cameraTransitionTime / transitionDuration, 1);
-        // Smoothstep easing for a smoother transition
+        // Smoothstep easing
         t = t * t * (3 - 2 * t);
         camera.position.lerpVectors(cameraStartPos, cameraEndPos, t);
         controls.target.lerpVectors(cameraStartTarget, cameraEndTarget, t);
@@ -224,33 +211,17 @@
       }
     }
 
-    // ------------------------------------------------------
     // Stage 1: Cotton Fields (Raw cotton growth)
-    // ------------------------------------------------------
     function createCottonFields() {
       cottonFieldGroup = new THREE.Group();
-
       // Create a large green plane to represent a cotton field.
       const fieldGeometry = new THREE.PlaneGeometry(100, 100);
-      const fieldMaterial = new THREE.MeshLambertMaterial({ color: 0x228B22 }); // Forest Green
+      const fieldMaterial = new THREE.MeshLambertMaterial({ color: 0x228B22 });
       const fieldMesh = new THREE.Mesh(fieldGeometry, fieldMaterial);
       fieldMesh.rotation.x = -Math.PI / 2;
       cottonFieldGroup.add(fieldMesh);
 
-      // Scatter small white spheres to represent cotton bolls.
-      const bollGeometry = new THREE.SphereGeometry(0.5, 16, 16);
-      const bollMaterial = new THREE.MeshLambertMaterial({ color: 0xffffff });
-      for (let i = 0; i < 200; i++) {
-        const boll = new THREE.Mesh(bollGeometry, bollMaterial);
-        boll.position.set(
-          Math.random() * 100 - 50,
-          0.5,
-          Math.random() * 100 - 50
-        );
-        cottonFieldGroup.add(boll);
-      }
-
-      // Particle system for ambient cotton fluff.
+      // Create a particle system for ambient cotton fluff.
       const particlesGeometry = new THREE.BufferGeometry();
       const particlesCount = 500;
       const positions = [];
@@ -265,23 +236,18 @@
       const particlesMaterial = new THREE.PointsMaterial({ color: 0xffffff, size: 0.2 });
       cottonParticles = new THREE.Points(particlesGeometry, particlesMaterial);
       cottonFieldGroup.add(cottonParticles);
-
       return cottonFieldGroup;
     }
 
-    // Gently rotate the cotton fluff particles for a subtle animation.
     function updateCottonFields(delta) {
       if (cottonParticles) {
         cottonParticles.rotation.y += delta * 0.1;
       }
     }
 
-    // ------------------------------------------------------
     // Stage 2: Harvesting Machinery
-    // ------------------------------------------------------
     function createHarvestingMachinery() {
       harvestingGroup = new THREE.Group();
-
       // Reuse the cotton field background from Stage 1.
       const fieldMesh = stageGroups[0].children.find(obj => obj.geometry && obj.geometry.type === "PlaneGeometry").clone();
       harvestingGroup.add(fieldMesh);
@@ -293,184 +259,4 @@
       machine.position.set(-40, 1, 0);
       harvestingGroup.add(machine);
 
-      // Add a rotating arm (a thin box) to simulate the harvesting mechanism.
-      const armGeometry = new THREE.BoxGeometry(0.5, 0.5, 4);
-      const armMaterial = new THREE.MeshLambertMaterial({ color: 0xff0000 });
-      const arm = new THREE.Mesh(armGeometry, armMaterial);
-      arm.position.set(0, 1.5, -2);
-      arm.name = "arm";
-      machine.add(arm);
-
-      return harvestingGroup;
-    }
-
-    // Animate the harvesting machine moving across the field and its arm rotating.
-    function updateHarvestingMachinery(delta) {
-      if (!harvestingGroup.visible) return;
-
-      // Move the machine horizontally across the scene.
-      machine.position.x += delta * 5; // Speed: 5 units per second.
-      if (machine.position.x > 40) {
-        machine.position.x = -40;
-      }
-      // Rotate the arm continuously.
-      const arm = machine.getObjectByName("arm");
-      if (arm) {
-        arm.rotation.z += delta * 2;
-      }
-    }
-
-    // ------------------------------------------------------
-    // Stage 3: Ginning Facilities (Cotton Processing)
-    // ------------------------------------------------------
-    function createGinningFacilities() {
-      ginningGroup = new THREE.Group();
-
-      // Create a simple building to represent a ginning facility.
-      const buildingGeometry = new THREE.BoxGeometry(30, 15, 20);
-      const buildingMaterial = new THREE.MeshLambertMaterial({ color: 0xaaaaaa });
-      ginningBuilding = new THREE.Mesh(buildingGeometry, buildingMaterial);
-      ginningBuilding.position.set(0, 7.5, 0);
-      ginningGroup.add(ginningBuilding);
-
-      // Add a chimney to simulate a factory environment.
-      const chimneyGeometry = new THREE.CylinderGeometry(1, 1, 8, 16);
-      const chimneyMaterial = new THREE.MeshLambertMaterial({ color: 0x333333 });
-      const chimney = new THREE.Mesh(chimneyGeometry, chimneyMaterial);
-      chimney.position.set(10, 15, 0);
-      ginningGroup.add(chimney);
-
-      // Particle system to simulate seed separation during cotton processing.
-      const seedGeometry = new THREE.BufferGeometry();
-      const seedCount = 300;
-      const seedPositions = [];
-      for (let i = 0; i < seedCount; i++) {
-        seedPositions.push(
-          ginningBuilding.position.x + (Math.random() - 0.5) * 10,
-          ginningBuilding.position.y + Math.random() * 5,
-          ginningBuilding.position.z + (Math.random() - 0.5) * 10
-        );
-      }
-      seedGeometry.setAttribute('position', new THREE.Float32BufferAttribute(seedPositions, 3));
-      const seedMaterial = new THREE.PointsMaterial({ color: 0xffff00, size: 0.3 });
-      seedParticles = new THREE.Points(seedGeometry, seedMaterial);
-      ginningGroup.add(seedParticles);
-
-      return ginningGroup;
-    }
-
-    // Animate the seed particles to simulate upward movement (e.g., separation).
-    function updateGinningFacilities(delta) {
-      if (!ginningGroup.visible) return;
-      if (seedParticles) {
-        const positions = seedParticles.geometry.attributes.position.array;
-        for (let i = 1; i < positions.length; i += 3) {
-          positions[i] += delta * 0.5; // Slowly move upward.
-          // Reset position if particle has moved too high.
-          if (positions[i] > 25) {
-            positions[i] = ginningBuilding.position.y + Math.random() * 5;
-          }
-        }
-        seedParticles.geometry.attributes.position.needsUpdate = true;
-      }
-    }
-
-    // ------------------------------------------------------
-    // Stage 4: Textile Factories (Manufacturing Process)
-    // ------------------------------------------------------
-    function createTextileFactories() {
-      textileGroup = new THREE.Group();
-
-      // Create a factory building.
-      const factoryGeometry = new THREE.BoxGeometry(40, 20, 30);
-      const factoryMaterial = new THREE.MeshLambertMaterial({ color: 0x888888 });
-      const factory = new THREE.Mesh(factoryGeometry, factoryMaterial);
-      factory.position.set(0, 10, 0);
-      textileGroup.add(factory);
-
-      // Add rotating cylinders to represent spinning machines.
-      for (let i = -1; i <= 1; i++) {
-        const cylinderGeometry = new THREE.CylinderGeometry(1, 1, 4, 16);
-        const cylinderMaterial = new THREE.MeshLambertMaterial({ color: 0xffa500 });
-        const cylinder = new THREE.Mesh(cylinderGeometry, cylinderMaterial);
-        cylinder.position.set(i * 5, 12, 0);
-        cylinder.rotation.z = Math.PI / 2;
-        cylinder.name = "spinningMachine";
-        textileGroup.add(cylinder);
-      }
-
-      // Particle system to simulate fabric creation.
-      const spinningGeometry = new THREE.BufferGeometry();
-      const spinningCount = 400;
-      const spinningPositions = [];
-      for (let i = 0; i < spinningCount; i++) {
-        spinningPositions.push(
-          Math.random() * 10 - 5,
-          Math.random() * 5 + 10,
-          Math.random() * 10 - 5
-        );
-      }
-      spinningGeometry.setAttribute('position', new THREE.Float32BufferAttribute(spinningPositions, 3));
-      const spinningMaterial = new THREE.PointsMaterial({ color: 0xffc0cb, size: 0.2 });
-      spinningParticles = new THREE.Points(spinningGeometry, spinningMaterial);
-      textileGroup.add(spinningParticles);
-
-      return textileGroup;
-    }
-
-    // Rotate the spinning machines and animate the fabric particles.
-    function updateTextileFactories(delta) {
-      if (!textileGroup.visible) return;
-      textileGroup.children.forEach(child => {
-        if (child.name === "spinningMachine") {
-          child.rotation.x += delta * 2;
-        }
-      });
-      if (spinningParticles) {
-        spinningParticles.rotation.y += delta * 0.5;
-      }
-    }
-
-    // ------------------------------------------------------
-    // Stage 5: Distribution Centers (Finished Products Distribution)
-    // ------------------------------------------------------
-    function createDistributionCenter() {
-      distributionGroup = new THREE.Group();
-
-      // Create a warehouse building.
-      const warehouseGeometry = new THREE.BoxGeometry(50, 25, 40);
-      const warehouseMaterial = new THREE.MeshLambertMaterial({ color: 0xcccccc });
-      const warehouse = new THREE.Mesh(warehouseGeometry, warehouseMaterial);
-      warehouse.position.set(0, 12.5, 0);
-      distributionGroup.add(warehouse);
-
-      // Create a conveyor belt represented by a long, thin box.
-      const conveyorGeometry = new THREE.BoxGeometry(40, 1, 5);
-      const conveyorMaterial = new THREE.MeshLambertMaterial({ color: 0x333333 });
-      conveyor = new THREE.Mesh(conveyorGeometry, conveyorMaterial);
-      conveyor.position.set(0, 2, 10);
-      distributionGroup.add(conveyor);
-
-      // Add boxes along the conveyor to represent finished products.
-      for (let i = -2; i <= 2; i++) {
-        const boxGeometry = new THREE.BoxGeometry(2, 2, 2);
-        const boxMaterial = new THREE.MeshLambertMaterial({ color: 0x0000ff });
-        const box = new THREE.Mesh(boxGeometry, boxMaterial);
-        box.position.set(i * 4, 3, 10);
-        distributionGroup.add(box);
-      }
-
-      return distributionGroup;
-    }
-
-    // Animate the conveyor belt (by moving its position) to simulate product distribution.
-    function updateDistributionCenter(delta) {
-      if (!distributionGroup.visible) return;
-      conveyor.position.x += delta * 2;
-      if (conveyor.position.x > 10) {
-        conveyor.position.x = -10;
-      }
-    }
-  </script>
-</body>
-</html>
+      // Add a rotating a
